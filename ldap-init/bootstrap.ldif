@@ -1,0 +1,82 @@
+# Complete LDAP directory structure
+
+# Base domain entry
+dn: dc=example,dc=org
+objectClass: top
+objectClass: dcObject
+objectClass: organization
+dc: example
+o: Example Organization
+
+# Organizational Units
+dn: ou=people,dc=example,dc=org
+objectClass: top
+objectClass: organizationalUnit
+ou: people
+
+dn: ou=groups,dc=example,dc=org
+objectClass: top
+objectClass: organizationalUnit
+ou: groups
+
+# Users
+dn: uid=john.doe,ou=people,dc=example,dc=org
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: john.doe
+cn: John Doe
+sn: Doe
+givenName: John
+mail: john.doe@example.org
+userPassword: test
+
+dn: uid=jane.smith,ou=people,dc=example,dc=org
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: jane.smith
+cn: Jane Smith
+sn: Smith
+givenName: Jane
+mail: jane.smith@example.org
+userPassword: test
+
+dn: uid=admin,ou=people,dc=example,dc=org
+objectClass: top
+objectClass: person
+objectClass: organizationalPerson
+objectClass: inetOrgPerson
+uid: admin
+cn: Admin User
+sn: User
+givenName: Admin
+mail: admin@example.org
+userPassword: admin
+
+# Groups
+dn: cn=users,ou=groups,dc=example,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: users
+description: Default users group
+member: uid=john.doe,ou=people,dc=example,dc=org
+member: uid=jane.smith,ou=people,dc=example,dc=org
+member: uid=admin,ou=people,dc=example,dc=org
+
+dn: cn=developers,ou=groups,dc=example,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: developers
+description: Development team
+member: uid=john.doe,ou=people,dc=example,dc=org
+
+dn: cn=admins,ou=groups,dc=example,dc=org
+objectClass: top
+objectClass: groupOfNames
+cn: admins
+description: System administrators
+member: uid=jane.smith,ou=people,dc=example,dc=org
+member: uid=admin,ou=people,dc=example,dc=org

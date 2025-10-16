@@ -1,0 +1,73 @@
+
+version: '3.8'
+services:
+  # Init container to generate TLS certificates
+  cert-init:
+    image: alpine/openssl:latest
+    entrypoint: ["/bin/sh"]
+    command: >-
+      -c '
+      mkdir -p /certs &&
+      if [ ! -f /certs/ldap.crt ]; then
+        echo "Generating TLS certificates for LDAPS..." &&
+        openssl req -x509 -newkey rsa:4096 -keyout /certs/ldap.key -out /certs/ldap.crt \
+          -days 365 -nodes -subj "/CN=ldap.example.org/O=Example Organization/C=US" \
+          -addext "subjectAltName=DNS:ldap.example.org,DNS:openldap,DNS:localhost,IP:127.0.0.1" &&
+        cp /certs/ldap.crt /certs/ldap-chain.crt &&
+        chmod 644 /certs/ldap.crt /certs/ldap-chain.crt &&
+        chmod 600 /certs/ldap.key &&
+        chown 1001:1001 /certs/* 2>/dev/null || echo "Note: chown failed, but certs created" &&
+        echo "TLS certificates generated successfully";
+      else
+        echo "TLS certificates already exist, skipping generation";
+      fi'
+    volumes:
+      - ldap_certs:/certs
+    networks:
+      - ldap_network
+
+  openldap:
+    image: public.ecr.aws/bitnami/openldap:2.6.10
+    container_name: openldap
+    env_file:
+      - .env
+    environment:
+      # TLS config
+      LDAP_LDAPS_PORT_NUMBER: 1636
+      LDAP_ENABLE_TLS: "yes"
+      LDAP_REQUIRE_TLS: "yes" # TLS only
+      LDAP_TLS_CERT_FILE: /opt/bitnami/openldap/certs/ldap.crt
+      LDAP_TLS_KEY_FILE: /opt/bitnami/openldap/certs/ldap.key
+      LDAP_TLS_CA_FILE: /opt/bitnami/openldap/certs/ldap.crt
+
+      # Base Configuration
+      LDAP_ROOT: ${LDAP_BASE_DN}
+      LDAP_ADMIN_USERNAME: admin
+      LDAP_ADMIN_PASSWORD: ${LDAP_ADMIN_PASSWORD}
+
+      # LDIF Import Configuration
+      LDAP_CUSTOM_LDIF_DIR: /ldifs
+      LDAP_SKIP_DEFAULT_TREE: "yes"
+
+      # Security Configuration
+      LDAP_ALLOW_ANON_BINDING: "no"
+    volumes:
+      - ldap_data:/bitnami/openldap
+      - ./ldap-init:/ldifs:ro
+      - ldap_certs:/opt/bitnami/openldap/certs:ro
+    ports:
+      - "1636:1636"
+    hostname: ldap.example.org
+    networks:
+      - ldap_network
+    depends_on:
+      cert-init:
+        condition: service_completed_successfully
+
+volumes:
+  ldap_data:
+  ldap_certs:
+
+networks:
+  ldap_network:
+    driver: bridge
