@@ -64,6 +64,37 @@ services:
       cert-init:
         condition: service_completed_successfully
 
+  # phpLDAPadmin - Web interface for LDAP management
+  ldapadmin:
+    image: phpldapadmin/phpldapadmin:latest
+    container_name: phpldapadmin
+    environment:
+      # LDAP Connection Configuration
+      LDAP_HOST: "openldap"
+      LDAP_PORT: 1636
+      LDAP_CONNECTION: "ldaps"
+      LDAP_BASE_DN: "dc=example,dc=org"
+      # Service Account
+      LDAP_USERNAME: "cn=admin,dc=example,dc=org"
+      LDAP_PASSWORD: "admin"
+      # Disable client TLS
+      LDAP_TLS_INSECURE: "true"
+      # Login Configuration
+      LDAP_LOGIN_ATTR: "uid"
+      LDAP_LOGIN_OBJECTCLASS: "inetOrgPerson"
+      LDAP_ALLOW_GUEST: "false"
+      LDAP_ALERT_ROOTDN: "false"
+      # Optional Configuration
+      LDAP_NAME: "OpenLDAP LDAPS Server"
+      APP_DEBUG: "false"
+    ports:
+      - "8081:8080"
+      - "2019:2019"
+    networks:
+      - ldap_network
+    depends_on:
+      - openldap
+
 volumes:
   ldap_data:
   ldap_certs:
